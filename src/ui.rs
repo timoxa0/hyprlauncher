@@ -33,7 +33,19 @@ impl LauncherWindow {
 
         let main_box = GtkBox::new(Orientation::Vertical, 0);
         let search_entry = SearchEntry::new();
-        search_entry.set_placeholder_text(Some("Shift+Return to finish search"));
+        search_entry.set_placeholder_text(Some("Press / to start searching"));
+
+        let focus_controller = gtk4::EventControllerFocus::new();
+        focus_controller.connect_enter(clone!(@strong search_entry => move |_| {
+            search_entry.set_placeholder_text(None);
+        }));
+
+        focus_controller.connect_leave(clone!(@strong search_entry => move |_| {
+            search_entry.set_placeholder_text(Some("Press / to start searching"));
+        }));
+
+        search_entry.add_controller(focus_controller);
+
         let scrolled = ScrolledWindow::new();
         let results_list = ListBox::new();
 
@@ -99,22 +111,20 @@ impl LauncherWindow {
         );
 
         let search_controller = gtk4::EventControllerKey::new();
-        search_controller.connect_key_pressed(
-            clone!(@strong results_list => move |_, key, _, _| {
-                match key {
-                    Key::Escape => {
-                        if let Some(row) = results_list.first_child() {
-                            if let Some(list_row) = row.downcast_ref::<ListBoxRow>() {
-                                results_list.select_row(Some(list_row));
-                                list_row.grab_focus();
-                            }
+        search_controller.connect_key_pressed(clone!(@strong results_list => move |_, key, _, _| {
+            match key {
+                Key::Escape => {
+                    if let Some(row) = results_list.first_child() {
+                        if let Some(list_row) = row.downcast_ref::<ListBoxRow>() {
+                            results_list.select_row(Some(list_row));
+                            list_row.grab_focus();
                         }
-                        glib::Propagation::Stop
-                    },
-                    _ => glib::Propagation::Proceed
-                }
-            }),
-        );
+                    }
+                    glib::Propagation::Stop
+                },
+                _ => glib::Propagation::Proceed
+            }
+        }));
         self.search_entry.add_controller(search_controller);
 
         let window_controller = gtk4::EventControllerKey::new();
