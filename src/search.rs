@@ -1,4 +1,4 @@
-use crate::launcher::{AppEntry, APP_CACHE};
+use crate::launcher::{self, AppEntry, APP_CACHE};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use rayon::prelude::*;
@@ -11,11 +11,75 @@ pub struct SearchResult {
 
 pub async fn search_applications(query: &str) -> Vec<SearchResult> {
     let (tx, rx) = oneshot::channel();
-
     let query = query.to_string();
+
     tokio::task::spawn_blocking(move || {
         let cache = APP_CACHE.blocking_read();
-        let results = if query.is_empty() {
+        let results = if query.starts_with('~') || query.starts_with('$') || query.starts_with('/')
+        {
+            let expanded_path =
+                shellexpand::full(&query).unwrap_or(std::borrow::Cow::Borrowed(&query));
+
+            if expanded_path.ends_with('/') {
+                if let Ok(entries) = std::fs::read_dir(expanded_path.as_ref()) {
+                    let mut matches: Vec<_> = entries
+                        .filter_map(|entry| entry.ok())
+                        .filter_map(|entry| {
+                            launcher::create_file_entry(entry.path().to_string_lossy().to_string())
+                                .map(|entry| SearchResult {
+                                    app: entry,
+                                    score: 1000,
+                                })
+                        })
+                        .collect();
+                    matches.sort_by(|a, b| {
+                        match (a.app.icon_name == "folder", b.app.icon_name == "folder") {
+                            (true, false) => std::cmp::Ordering::Less,
+                            (false, true) => std::cmp::Ordering::Greater,
+                            _ => a.app.name.cmp(&b.app.name),
+                        }
+                    });
+                    matches
+                } else {
+                    Vec::new()
+                }
+            } else {
+                let path = std::path::Path::new(expanded_path.as_ref());
+                if let Some(parent) = path.parent() {
+                    if let Ok(entries) = std::fs::read_dir(parent) {
+                        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+                        let mut matches: Vec<_> = entries
+                            .filter_map(|entry| entry.ok())
+                            .filter_map(|entry| {
+                                let name = entry.file_name();
+                                let name_str = name.to_string_lossy();
+                                if name_str.contains(file_name) {
+                                    launcher::create_file_entry(
+                                        entry.path().to_string_lossy().to_string(),
+                                    )
+                                    .map(|entry| {
+                                        SearchResult {
+                                            app: entry,
+                                            score: 1000,
+                                        }
+                                    })
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        matches.sort_by(|a, b| b.score.cmp(&a.score));
+                        matches.truncate(100);
+                        matches
+                    } else {
+                        Vec::new()
+                    }
+                } else {
+                    Vec::new()
+                }
+            }
+        } else if query.is_empty() {
             let mut results: Vec<_> = cache
                 .values()
                 .par_bridge()

@@ -18,6 +18,13 @@ pub struct AppEntry {
     pub icon_name: String,
     pub path: String,
     pub launch_count: u32,
+    pub entry_type: EntryType,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum EntryType {
+    Application,
+    File,
 }
 
 pub static HEATMAP_PATH: &str = "~/.local/share/hyprlauncher/heatmap.json";
@@ -100,6 +107,7 @@ pub async fn load_applications() {
                                 icon_name,
                                 path,
                                 launch_count,
+                                entry_type: EntryType::Application,
                             },
                         )
                     })
@@ -138,4 +146,51 @@ fn find_desktop_entry(name: &str) -> Option<DesktopEntry> {
         }
     }
     None
+}
+
+pub fn create_file_entry(path: String) -> Option<AppEntry> {
+    let path = if path.starts_with('~') || path.starts_with('$') {
+        shellexpand::full(&path).ok()?.to_string()
+    } else {
+        path
+    };
+
+    let metadata = std::fs::metadata(&path).ok()?;
+
+    if !metadata.is_file() && !metadata.is_dir() {
+        return None;
+    }
+
+    let name = std::path::Path::new(&path)
+        .file_name()?
+        .to_str()?
+        .to_string();
+
+    let icon_name = if metadata.is_dir() {
+        "folder"
+    } else if metadata.permissions().mode() & 0o111 != 0 {
+        "application-x-executable"
+    } else {
+        match std::path::Path::new(&path)
+            .extension()
+            .and_then(|s| s.to_str())
+        {
+            Some("txt") | Some("md") => "text-x-generic",
+            Some("pdf") => "application-pdf",
+            Some("png") | Some("jpg") | Some("jpeg") => "image-x-generic",
+            Some("mp3") | Some("wav") | Some("ogg") => "audio-x-generic",
+            Some("mp4") | Some("mkv") | Some("avi") => "video-x-generic",
+            _ => "text-x-generic",
+        }
+    }
+    .to_string();
+
+    Some(AppEntry {
+        name,
+        exec: path.clone(),
+        icon_name,
+        path,
+        launch_count: 0,
+        entry_type: EntryType::File,
+    })
 }

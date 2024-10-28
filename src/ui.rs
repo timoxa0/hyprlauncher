@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::launcher::{self, AppEntry};
+use crate::launcher::{self, AppEntry, EntryType};
 use crate::search;
 use gtk4::gdk::Key;
 use gtk4::glib::{self, clone};
@@ -143,7 +143,7 @@ impl LauncherWindow {
                 Key::Return => {
                     if let Some(row) = results_list.selected_row() {
                         if let Some(app_data) = get_app_data(row.index() as usize, &app_data_store) {
-                            launch_application(&app_data);
+                            launch_application(&app_data, &search_entry);
                             window.close();
                         }
                     }
@@ -172,9 +172,10 @@ impl LauncherWindow {
 
         self.results_list
             .connect_row_activated(clone!(@strong self.window as window,
+                @strong self.search_entry as search_entry,
                 @strong app_data_store => move |_, row| {
                 if let Some(app_data) = get_app_data(row.index() as usize, &app_data_store) {
-                    launch_application(&app_data);
+                    launch_application(&app_data, &search_entry);
                     window.close();
                 }
             }));
@@ -277,21 +278,40 @@ fn select_previous(list: &ListBox) {
     }
 }
 
-fn launch_application(app: &AppEntry) {
-    let exec = app
-        .exec
-        .replace("%f", "")
-        .replace("%F", "")
-        .replace("%u", "")
-        .replace("%U", "")
-        .replace("%i", "")
-        .replace("%c", &app.name)
-        .trim()
-        .to_string();
+fn launch_application(app: &AppEntry, search_entry: &SearchEntry) {
+    match app.entry_type {
+        EntryType::Application => {
+            let exec = app
+                .exec
+                .replace("%f", "")
+                .replace("%F", "")
+                .replace("%u", "")
+                .replace("%U", "")
+                .replace("%i", "")
+                .replace("%c", &app.name)
+                .trim()
+                .to_string();
 
-    launcher::increment_launch_count(app);
+            launcher::increment_launch_count(app);
 
-    glib::spawn_future_local(async move {
-        let _ = Command::new("sh").arg("-c").arg(exec).spawn();
-    });
+            glib::spawn_future_local(async move {
+                let _ = Command::new("sh").arg("-c").arg(exec).spawn();
+            });
+        }
+        EntryType::File => {
+            if app.icon_name == "folder" {
+                let path = if app.path.ends_with('/') {
+                    app.path.clone()
+                } else {
+                    format!("{}/", app.path)
+                };
+                search_entry.set_text(&path);
+            } else {
+                let path = app.path.clone();
+                glib::spawn_future_local(async move {
+                    let _ = Command::new("xdg-open").arg(path).spawn();
+                });
+            }
+        }
+    }
 }
