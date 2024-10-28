@@ -100,10 +100,9 @@ impl LauncherWindow {
 
         let search_controller = gtk4::EventControllerKey::new();
         search_controller.connect_key_pressed(
-            clone!(@strong results_list, @strong self.window as window,
-                  @strong app_data_store => move |_, key, _, _| {
+            clone!(@strong results_list => move |_, key, _, _| {
                 match key {
-                    Key::Return | Key::Escape => {
+                    Key::Escape => {
                         if let Some(row) = results_list.first_child() {
                             if let Some(list_row) = row.downcast_ref::<ListBoxRow>() {
                                 results_list.select_row(Some(list_row));
@@ -141,15 +140,6 @@ impl LauncherWindow {
                     }
                     glib::Propagation::Stop
                 },
-                Key::Return => {
-                    if let Some(row) = results_list.selected_row() {
-                        if let Some(app_data) = get_app_data(row.index() as usize, &app_data_store) {
-                            launch_application(&app_data, &search_entry);
-                            window.close();
-                        }
-                    }
-                    glib::Propagation::Stop
-                },
                 Key::slash => {
                     search_entry.grab_focus();
                     glib::Propagation::Stop
@@ -180,6 +170,19 @@ impl LauncherWindow {
                     window.close();
                 }
             }));
+
+        self.search_entry.connect_activate(
+            clone!(@strong results_list, @strong self.window as window,
+                  @strong self.search_entry as search_entry,
+                  @strong app_data_store => move |_| {
+                if let Some(row) = results_list.selected_row() {
+                    if let Some(app_data) = get_app_data(row.index() as usize, &app_data_store) {
+                        launch_application(&app_data, &search_entry);
+                        window.close();
+                    }
+                }
+            }),
+        );
     }
 
     fn load_applications(&self) {
