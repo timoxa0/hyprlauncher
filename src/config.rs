@@ -140,6 +140,6 @@ fn get_default_css() -> String {
             font-size: 12px;
             font-family: monospace;
             opacity: 0.8;
-        }"
+        }",
     )
 }

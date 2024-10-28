@@ -4,12 +4,12 @@ use crate::search;
 use gtk4::gdk::Key;
 use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
+use gtk4::ListBoxRow;
 use gtk4::{Application, ApplicationWindow, Label, ListBox, ScrolledWindow, SearchEntry};
 use gtk4::{Box as GtkBox, CssProvider, Orientation, STYLE_PROVIDER_PRIORITY_APPLICATION};
 use std::cell::RefCell;
 use std::process::Command;
 use std::rc::Rc;
-use gtk4::ListBoxRow;
 
 pub struct LauncherWindow {
     window: ApplicationWindow,
@@ -27,6 +27,8 @@ impl LauncherWindow {
             .default_height(config.height)
             .title("HyprLauncher")
             .decorated(false)
+            .resizable(false)
+            .modal(true)
             .build();
 
         let main_box = GtkBox::new(Orientation::Vertical, 0);
