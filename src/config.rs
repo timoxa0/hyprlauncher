@@ -22,8 +22,8 @@ pub struct Theme {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            width: 800,
-            height: 400,
+            width: 600,
+            height: 600,
             font_size: 14,
             max_results: 10,
             theme: Theme {
