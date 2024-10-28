@@ -307,9 +307,9 @@ fn launch_application(app: &AppEntry, search_entry: &SearchEntry) {
                 };
                 search_entry.set_text(&path);
             } else {
-                let path = app.path.clone();
+                let exec = app.exec.clone();
                 glib::spawn_future_local(async move {
-                    let _ = Command::new("xdg-open").arg(path).spawn();
+                    let _ = Command::new("sh").arg("-c").arg(exec).spawn();
                 });
             }
         }

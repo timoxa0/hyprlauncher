@@ -166,29 +166,43 @@ pub fn create_file_entry(path: String) -> Option<AppEntry> {
         .to_str()?
         .to_string();
 
-    let icon_name = if metadata.is_dir() {
-        "folder"
+    let (icon_name, exec) = if metadata.is_dir() {
+        ("folder", String::new())
     } else if metadata.permissions().mode() & 0o111 != 0 {
-        "application-x-executable"
+        ("application-x-executable", format!("\"{}\"", path))
     } else {
-        match std::path::Path::new(&path)
-            .extension()
-            .and_then(|s| s.to_str())
+        let mime_type = match std::process::Command::new("file")
+            .arg("--mime-type")
+            .arg("-b")
+            .arg(&path)
+            .output()
         {
-            Some("txt") | Some("md") => "text-x-generic",
-            Some("pdf") => "application-pdf",
-            Some("png") | Some("jpg") | Some("jpeg") => "image-x-generic",
-            Some("mp3") | Some("wav") | Some("ogg") => "audio-x-generic",
-            Some("mp4") | Some("mkv") | Some("avi") => "video-x-generic",
+            Ok(output) => String::from_utf8_lossy(&output.stdout).trim().to_string(),
+            Err(_) => String::from("application/octet-stream"),
+        };
+
+        let icon = match mime_type.split('/').next().unwrap_or("") {
+            "text" => "text-x-generic",
+            "image" => "image-x-generic",
+            "audio" => "audio-x-generic",
+            "video" => "video-x-generic",
+            "application" => match std::path::Path::new(&path)
+                .extension()
+                .and_then(|s| s.to_str())
+            {
+                Some("pdf") => "application-pdf",
+                _ => "application-x-generic",
+            },
             _ => "text-x-generic",
-        }
-    }
-    .to_string();
+        };
+
+        (icon, format!("xdg-mime query default {} | xargs -I {{}} sh -c 'which {{}} >/dev/null && {{}} \"{}\" || xdg-open \"{}\"'", mime_type, path, path))
+    };
 
     Some(AppEntry {
         name,
-        exec: path.clone(),
-        icon_name,
+        exec,
+        icon_name: icon_name.to_string(),
         path,
         launch_count: 0,
         entry_type: EntryType::File,
