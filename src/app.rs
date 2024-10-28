@@ -9,7 +9,7 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let app = Application::builder()
-            .application_id("nnyyxxxx.hyprlauncher")
+            .application_id("hyprlauncher")
             .build();
 
         Self { app }
