@@ -102,20 +102,9 @@ pub struct Theme {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
-    pub width: i32,
-    pub height: i32,
-    pub show_descriptions: bool,
-    pub show_paths: bool,
-    pub show_icons: bool,
-    pub vim_keys: bool,
-    pub show_search: bool,
-    pub anchor: WindowAnchor,
-    pub margin_top: i32,
-    pub margin_bottom: i32,
-    pub margin_left: i32,
-    pub margin_right: i32,
+    pub window: Window,
     pub theme: Theme,
 }
 
@@ -133,7 +122,23 @@ pub enum WindowAnchor {
     bottom_right,
 }
 
-impl Default for Config {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Window {
+    pub width: i32,
+    pub height: i32,
+    pub anchor: WindowAnchor,
+    pub margin_top: i32,
+    pub margin_bottom: i32,
+    pub margin_left: i32,
+    pub margin_right: i32,
+    pub show_descriptions: bool,
+    pub show_paths: bool,
+    pub show_icons: bool,
+    pub show_search: bool,
+    pub vim_keys: bool,
+}
+
+impl Default for Window {
     fn default() -> Self {
         Self {
             width: 600,
@@ -141,14 +146,13 @@ impl Default for Config {
             show_descriptions: false,
             show_paths: false,
             show_icons: true,
-            vim_keys: true,
             show_search: true,
+            vim_keys: true,
             anchor: WindowAnchor::center,
             margin_top: 0,
             margin_bottom: 0,
             margin_left: 0,
             margin_right: 0,
-            theme: Theme::default(),
         }
     }
 }
