@@ -69,13 +69,30 @@ fn load_heatmap() -> HashMap<String, u32> {
         .unwrap_or_default()
 }
 
+pub fn get_desktop_paths() -> Vec<String> {
+    let mut paths = Vec::new();
+
+    if let Ok(xdg_dirs) = std::env::var("XDG_DATA_DIRS") {
+        paths.extend(
+            xdg_dirs
+                .split(':')
+                .map(|dir| format!("{}/applications", dir)),
+        );
+    }
+
+    paths.extend(DESKTOP_PATHS.iter().map(|&path| path.to_string()));
+
+    paths
+}
+
 pub async fn load_applications() {
     let start_time = std::time::Instant::now();
     let heatmap_future = tokio::task::spawn_blocking(load_heatmap);
 
     let mut apps = HashMap::with_capacity(2000);
+    let desktop_paths = get_desktop_paths();
 
-    let desktop_entries: Vec<_> = DESKTOP_PATHS
+    let desktop_entries: Vec<_> = desktop_paths
         .par_iter()
         .flat_map(|path| {
             let expanded_path = shellexpand::tilde(path).to_string();

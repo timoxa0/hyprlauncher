@@ -93,15 +93,13 @@ impl Default for Typography {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Theme {
     pub colors: Colors,
     pub corners: Corners,
     pub spacing: Spacing,
     pub typography: Typography,
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Serialize, Deserialize)]
