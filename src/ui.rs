@@ -22,7 +22,11 @@ pub struct LauncherWindow {
 
 impl LauncherWindow {
     pub fn new(app: &Application, rt: Handle) -> Self {
-        println!("Creating launcher window");
+        let window_start = std::time::Instant::now();
+        println!(
+            "Creating launcher window ({:.3}ms)",
+            window_start.elapsed().as_secs_f64() * 1000.0
+        );
         let config = Config::load();
         let window = ApplicationWindow::builder()
             .application(app)
@@ -98,7 +102,11 @@ impl LauncherWindow {
     }
 
     pub fn present(&self) {
-        println!("Presenting launcher window");
+        let present_start = std::time::Instant::now();
+        println!(
+            "Presenting launcher window ({:.3}ms)",
+            present_start.elapsed().as_secs_f64() * 1000.0
+        );
         self.window.present();
         if Config::load().show_search {
             self.search_entry.grab_focus();

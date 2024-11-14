@@ -63,13 +63,21 @@ fn load_heatmap() -> HashMap<String, u32> {
 }
 
 pub async fn load_applications() {
-    println!("Loading application heatmap...");
+    let start_time = std::time::Instant::now();
+    println!(
+        "Loading application heatmap... ({:.3}ms)",
+        start_time.elapsed().as_secs_f64() * 1000.0
+    );
     let heatmap = tokio::task::spawn_blocking(load_heatmap)
         .await
         .unwrap_or_default();
 
     let mut apps = HashMap::new();
-    println!("Scanning desktop entries...");
+    let desktop_start = std::time::Instant::now();
+    println!(
+        "Scanning desktop entries... ({:.3}ms)",
+        desktop_start.elapsed().as_secs_f64() * 1000.0
+    );
     let desktop_paths = std::env::var("XDG_DATA_DIRS")
         .map(|str| {
             str.split(':')
@@ -133,8 +141,16 @@ pub async fn load_applications() {
         }
     }
 
-    println!("Found {} desktop entries", apps.len());
-    println!("Scanning PATH for executables...");
+    println!(
+        "Found {} desktop entries ({:.3}ms)",
+        apps.len(),
+        desktop_start.elapsed().as_secs_f64() * 1000.0
+    );
+    let exec_start = std::time::Instant::now();
+    println!(
+        "Scanning PATH for executables... ({:.3}ms)",
+        exec_start.elapsed().as_secs_f64() * 1000.0
+    );
 
     let path = std::env::var("PATH").unwrap_or_default();
     let path_entries: Vec<_> = path.split(':').collect();
@@ -185,7 +201,11 @@ pub async fn load_applications() {
         apps.insert(name, entry);
     }
 
-    println!("Found {} total applications", apps.len());
+    println!(
+        "Found {} total applications ({:.3}ms)",
+        apps.len(),
+        exec_start.elapsed().as_secs_f64() * 1000.0
+    );
     let mut cache = APP_CACHE.write().await;
     *cache = apps;
 }
