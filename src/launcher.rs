@@ -31,7 +31,6 @@ pub enum EntryType {
 pub static HEATMAP_PATH: &str = "~/.local/share/hyprlauncher/heatmap.json";
 
 pub fn increment_launch_count(app: &AppEntry) {
-    println!("Launching application: {}", app.name);
     let app_name = app.name.clone();
     let count = app.launch_count + 1;
 
