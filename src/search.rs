@@ -43,12 +43,7 @@ pub async fn search_applications(query: &str) -> Vec<SearchResult> {
             Some(_) => {
                 let matcher = SkimMatcherV2::default().smart_case();
                 let mut results = Vec::with_capacity(50);
-
-                if !query.contains(' ') {
-                    if let Some(result) = check_binary(&query) {
-                        results.push(result);
-                    }
-                }
+                let mut seen_names = std::collections::HashSet::new();
 
                 for app in cache.values() {
                     let name_lower = app.name.to_lowercase();
@@ -58,6 +53,7 @@ pub async fn search_applications(query: &str) -> Vec<SearchResult> {
                             app: app.clone(),
                             score: 10000 + calculate_bonus_score(app),
                         });
+                        seen_names.insert(name_lower);
                         continue;
                     }
 
@@ -66,10 +62,13 @@ pub async fn search_applications(query: &str) -> Vec<SearchResult> {
                             app: app.clone(),
                             score: score + calculate_bonus_score(app),
                         });
+                        seen_names.insert(name_lower);
+                    }
+                }
 
-                        if results.len() >= 50 {
-                            break;
-                        }
+                if !seen_names.contains(&query) {
+                    if let Some(result) = check_binary(&query) {
+                        results.push(result);
                     }
                 }
 
