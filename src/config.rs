@@ -160,7 +160,7 @@ impl Default for Window {
             show_border: true,
             border_width: 2,
             border_color: String::from("#333333"),
-            show_scrollbar: true,
+            show_scrollbar: false,
         }
     }
 }
