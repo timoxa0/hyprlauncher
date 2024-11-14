@@ -7,9 +7,8 @@ use gtk4::{
     gdk::Key,
     glib::{self},
     prelude::*,
-    ListBoxRow,
-    {Application, ApplicationWindow, Label, ListBox, ScrolledWindow, SearchEntry},
-    {Box as GtkBox, CssProvider, Orientation, STYLE_PROVIDER_PRIORITY_APPLICATION},
+    Application, ApplicationWindow, Box as GtkBox, CssProvider, Label, ListBox, ListBoxRow,
+    Orientation, ScrolledWindow, SearchEntry, STYLE_PROVIDER_PRIORITY_APPLICATION,
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use std::{cell::RefCell, process::Command, rc::Rc};
