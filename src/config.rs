@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+#[allow(non_camel_case_types)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub width: i32,
@@ -12,6 +13,25 @@ pub struct Config {
     pub show_icons: bool,
     pub vim_keys: bool,
     pub show_search: bool,
+    pub anchor: WindowAnchor,
+    pub margin_top: i32,
+    pub margin_bottom: i32,
+    pub margin_left: i32,
+    pub margin_right: i32,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Serialize, Deserialize)]
+pub enum WindowAnchor {
+    center,
+    top,
+    bottom,
+    left,
+    right,
+    top_left,
+    top_right,
+    bottom_left,
+    bottom_right,
 }
 
 impl Default for Config {
@@ -24,6 +44,11 @@ impl Default for Config {
             show_icons: true,
             vim_keys: true,
             show_search: true,
+            anchor: WindowAnchor::center,
+            margin_top: 0,
+            margin_bottom: 0,
+            margin_left: 0,
+            margin_right: 0,
         }
     }
 }
