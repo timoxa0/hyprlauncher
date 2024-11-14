@@ -13,6 +13,8 @@ An unofficial GUI for launching applications, built with GTK4 and Rust. 🚀🦀
 
 ## Installation
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/hyprlauncher.svg)](https://repology.org/project/hyprlauncher/versions)
+
 ### GitHub Releases
 See Hyprlauncher's [releases page](https://github.com/hyprutils/hyprlauncher/releases) for downloadable binaries.
 
