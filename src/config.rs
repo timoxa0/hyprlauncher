@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::{env, fs};
+use std::{
+    env, 
+    fs,
+    path::PathBuf,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Corners {
