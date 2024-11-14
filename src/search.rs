@@ -2,6 +2,7 @@ use crate::launcher::{self, AppEntry, EntryType, APP_CACHE};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use rayon::prelude::*;
+use std::os::unix::fs::PermissionsExt;
 use tokio::sync::oneshot;
 
 pub struct SearchResult {
@@ -132,6 +133,26 @@ pub async fn search_applications(query: &str) -> Vec<SearchResult> {
             let mut seen_names = std::collections::HashSet::new();
             let mut seen_execs = std::collections::HashSet::new();
             let mut results: Vec<SearchResult> = Vec::new();
+
+            if !query.contains(' ') {
+                let bin_path = format!("/usr/bin/{}", query);
+                if let Ok(metadata) = std::fs::metadata(&bin_path) {
+                    if metadata.permissions().mode() & 0o111 != 0 {
+                        results.push(SearchResult {
+                            app: AppEntry {
+                                name: query.clone(),
+                                exec: bin_path.clone(),
+                                icon_name: String::from("application-x-executable"),
+                                description: String::new(),
+                                path: bin_path,
+                                launch_count: 0,
+                                entry_type: EntryType::File,
+                            },
+                            score: 3000,
+                        });
+                    }
+                }
+            }
 
             for app in cache_vec.iter() {
                 if app.path.contains("/applications/")
