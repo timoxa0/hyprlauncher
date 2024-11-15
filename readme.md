@@ -4,7 +4,7 @@
 
 <img src='hyprlauncher.png' width='200' height='200'>
 
-An unofficial GUI for launching applications, built with GTK4 and Rust. 🚀🦀<br>
+An unofficial GUI / daemon for launching applications, built with GTK4 and Rust. 🚀🦀<br>
 
 ## Preview
 ![Preview](.github/preview.png)
