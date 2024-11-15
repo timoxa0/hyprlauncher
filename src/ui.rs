@@ -280,6 +280,33 @@ impl LauncherWindow {
             search_entry_for_hide.grab_focus();
         });
     }
+
+    pub fn update_window_config(window: &ApplicationWindow, config: &Config) {
+        window.set_default_width(config.window.width);
+        window.set_default_height(config.window.height);
+
+        Self::setup_window_anchoring(window, config);
+        Self::apply_window_margins(window, config);
+
+        if let Some(native) = window.native() {
+            let css_provider = CssProvider::new();
+            css_provider.load_from_data(&config.get_css());
+            gtk4::style_context_add_provider_for_display(
+                &native.display(),
+                &css_provider,
+                STYLE_PROVIDER_PRIORITY_APPLICATION,
+            );
+        }
+
+        if let Some(search_entry) = window
+            .first_child()
+            .and_then(|child| child.first_child())
+            .and_then(|child| child.downcast::<gtk4::SearchEntry>().ok())
+        {
+            search_entry.set_text("__config_reload__");
+            search_entry.set_text("");
+        }
+    }
 }
 
 fn get_app_data(index: usize, store: &Rc<RefCell<Vec<AppEntry>>>) -> Option<AppEntry> {

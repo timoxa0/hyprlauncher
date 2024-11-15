@@ -1,10 +1,16 @@
-use crate::ui::LauncherWindow;
-use gtk4::{prelude::*, Application};
+use crate::{config::Config, ui::LauncherWindow};
+use gtk4::{
+    glib::{self, ControlFlow},
+    prelude::*,
+    Application, ApplicationWindow,
+};
 use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
     process,
+    sync::mpsc,
+    time::Duration,
 };
 use tokio::runtime::Runtime;
 
@@ -15,9 +21,11 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
+        println!("Initializing application runtime...");
         let rt = Runtime::new().expect("Failed to create Tokio runtime");
 
         if !Self::can_create_instance() {
+            println!("Another instance is already running, exiting");
             let app = Application::builder()
                 .application_id("hyprutils.hyprlauncher")
                 .flags(gtk4::gio::ApplicationFlags::ALLOW_REPLACEMENT)
@@ -30,6 +38,7 @@ impl App {
             process::exit(0);
         }
 
+        println!("Creating new application instance");
         let app = Application::builder()
             .application_id("hyprutils.hyprlauncher")
             .flags(gtk4::gio::ApplicationFlags::ALLOW_REPLACEMENT)
@@ -37,6 +46,40 @@ impl App {
 
         app.register(None::<&gtk4::gio::Cancellable>)
             .expect("Failed to register application");
+
+        let (tx, rx) = mpsc::channel();
+        crate::config::Config::watch_changes(move || {
+            let _ = tx.send(());
+        });
+
+        let app_clone = app.clone();
+        let mut last_config = Config::load();
+        let mut last_update = std::time::Instant::now();
+
+        glib::timeout_add_local(Duration::from_millis(100), move || {
+            if rx.try_recv().is_ok() {
+                let now = std::time::Instant::now();
+                if now.duration_since(last_update).as_millis() > 250 {
+                    if let Some(window) = app_clone.windows().first() {
+                        println!("Loading new config for comparison");
+                        let new_config = Config::load();
+                        if new_config != last_config {
+                            if let Some(launcher_window) =
+                                window.downcast_ref::<ApplicationWindow>()
+                            {
+                                println!("Config changed, updating window");
+                                LauncherWindow::update_window_config(launcher_window, &new_config);
+                                last_config = new_config;
+                                last_update = now;
+                            }
+                        } else {
+                            println!("Config unchanged");
+                        }
+                    }
+                }
+            }
+            ControlFlow::Continue
+        });
 
         if !app.is_remote() {
             let load_start = std::time::Instant::now();

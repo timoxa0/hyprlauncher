@@ -1,5 +1,6 @@
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path::PathBuf, sync::LazyLock};
+use std::{env, fs, path::PathBuf, sync::mpsc::channel, sync::LazyLock, thread, time::Duration};
 
 static CONFIG_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
     let xdg_config_dirs = env::var("XDG_CONFIG_DIRS").unwrap_or_else(|_| String::from("/etc/xdg"));
@@ -23,7 +24,7 @@ static CONFIG_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
     default_config_path
 });
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Corners {
     pub window: i32,
     pub search: i32,
@@ -40,7 +41,7 @@ impl Default for Corners {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Colors {
     pub window_bg: String,
     pub search_bg: String,
@@ -73,7 +74,7 @@ impl Default for Colors {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Spacing {
     pub search_margin: i32,
     pub search_padding: i32,
@@ -92,7 +93,7 @@ impl Default for Spacing {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Typography {
     pub search_font_size: i32,
     pub item_name_size: i32,
@@ -113,7 +114,7 @@ impl Default for Typography {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
 pub struct Theme {
     pub colors: Colors,
     pub corners: Corners,
@@ -122,14 +123,14 @@ pub struct Theme {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
 pub struct Config {
     pub window: Window,
     pub theme: Theme,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum WindowAnchor {
     center,
     top,
@@ -142,7 +143,7 @@ pub enum WindowAnchor {
     bottom_right,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Window {
     pub width: i32,
     pub height: i32,
@@ -192,33 +193,64 @@ impl Config {
 
     pub fn load() -> Self {
         let config_file = Self::config_dir().join("config.json");
+        println!("Loading configuration from: {:?}", config_file);
         let default_config = Config::default();
 
         if !config_file.exists() {
+            println!("Config file not found, creating default configuration");
             if let Ok(contents) = serde_json::to_string_pretty(&default_config) {
                 fs::write(&config_file, contents).unwrap_or_default();
             }
             return default_config;
         }
 
-        let existing_config: serde_json::Value = fs::read_to_string(&config_file)
-            .ok()
-            .and_then(|contents| serde_json::from_str(&contents).ok())
-            .unwrap_or_else(|| serde_json::json!({}));
+        println!("Reading existing configuration");
+        let file_contents = match fs::read_to_string(&config_file) {
+            Ok(contents) => contents,
+            Err(e) => {
+                println!("Error reading config file: {}", e);
+                return default_config;
+            }
+        };
+
+        let existing_config: serde_json::Value = match serde_json::from_str(&file_contents) {
+            Ok(config) => config,
+            Err(e) => {
+                println!(
+                    "Error parsing config JSON: {} at line {}, column {}",
+                    e,
+                    e.line(),
+                    e.column()
+                );
+                println!("Using default configuration");
+                return default_config;
+            }
+        };
 
         let merged_config = if let Ok(contents) = serde_json::to_string(&default_config) {
-            let default_json: serde_json::Value =
-                serde_json::from_str(&contents).unwrap_or_default();
+            let default_json: serde_json::Value = match serde_json::from_str(&contents) {
+                Ok(json) => json,
+                Err(e) => {
+                    println!("Error parsing default config: {}", e);
+                    return default_config;
+                }
+            };
             merge_json(existing_config, default_json.clone(), &default_json)
         } else {
             existing_config
         };
 
-        if let Ok(contents) = serde_json::to_string_pretty(&merged_config) {
-            fs::write(&config_file, contents).unwrap_or_default();
+        match serde_json::from_value(merged_config.clone()) {
+            Ok(config) => config,
+            Err(e) => {
+                println!("Error converting merged config to struct: {}", e);
+                println!(
+                    "Merged config was: {}",
+                    serde_json::to_string_pretty(&merged_config).unwrap_or_default()
+                );
+                default_config
+            }
         }
-
-        serde_json::from_value(merged_config).unwrap_or_default()
     }
 
     pub fn get_css(&self) -> String {
@@ -388,6 +420,70 @@ impl Config {
             )
         }
     }
+
+    pub fn watch_changes<F: Fn() + Send + 'static>(callback: F) {
+        let config_path = Self::config_dir().join("config.json");
+        println!("Setting up config file watcher for: {:?}", config_path);
+
+        let mut last_content = match fs::read_to_string(&config_path) {
+            Ok(content) => {
+                println!("Initial config content loaded");
+                Some(content)
+            }
+            Err(e) => {
+                println!("Error reading initial config: {}", e);
+                None
+            }
+        };
+
+        let mut last_update = std::time::Instant::now();
+
+        thread::spawn(move || {
+            let (tx, rx) = channel();
+
+            let mut watcher = RecommendedWatcher::new(tx, notify::Config::default())
+                .expect("Failed to create file watcher");
+
+            watcher
+                .watch(config_path.parent().unwrap(), RecursiveMode::NonRecursive)
+                .expect("Failed to watch config directory");
+
+            loop {
+                match rx.recv() {
+                    Ok(event) => {
+                        println!("Received file system event: {:?}", event);
+                        let now = std::time::Instant::now();
+                        if now.duration_since(last_update).as_millis() > 250 {
+                            thread::sleep(Duration::from_millis(50));
+
+                            match fs::read_to_string(&config_path) {
+                                Ok(new_content) => {
+                                    if last_content.as_ref() != Some(&new_content) {
+                                        println!("Config content changed");
+                                        println!(
+                                            "Old content length: {}",
+                                            last_content.as_ref().map(|c| c.len()).unwrap_or(0)
+                                        );
+                                        println!("New content length: {}", new_content.len());
+                                        last_content = Some(new_content);
+                                        last_update = now;
+                                        callback();
+                                    } else {
+                                        println!("Config content unchanged");
+                                    }
+                                }
+                                Err(e) => println!("Error reading config file: {}", e),
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("Watch error: {:?}", e);
+                        break;
+                    }
+                }
+            }
+        });
+    }
 }
 
 fn merge_json(
@@ -399,7 +495,22 @@ fn merge_json(
         (serde_json::Value::Object(mut existing_obj), serde_json::Value::Object(default_obj)) => {
             let mut result = serde_json::Map::new();
 
-            for (key, schema_val) in schema.as_object().unwrap() {
+            let schema_obj = match schema.as_object() {
+                Some(obj) => obj,
+                None => return serde_json::Value::Object(default_obj),
+            };
+
+            const MAX_DEPTH: usize = 10;
+            static CURRENT_DEPTH: std::sync::atomic::AtomicUsize =
+                std::sync::atomic::AtomicUsize::new(0);
+
+            let depth = CURRENT_DEPTH.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            if depth >= MAX_DEPTH {
+                CURRENT_DEPTH.store(0, std::sync::atomic::Ordering::SeqCst);
+                return serde_json::Value::Object(default_obj);
+            }
+
+            for (key, schema_val) in schema_obj {
                 if let Some(existing_val) = existing_obj.remove(key) {
                     if schema_val.is_object() && existing_val.is_object() {
                         result.insert(
@@ -411,13 +522,27 @@ fn merge_json(
                             ),
                         );
                     } else {
-                        result.insert(key.clone(), existing_val);
+                        let is_valid = match schema_val {
+                            serde_json::Value::Null => existing_val.is_null(),
+                            serde_json::Value::Bool(_) => existing_val.is_boolean(),
+                            serde_json::Value::Number(_) => existing_val.is_number(),
+                            serde_json::Value::String(_) => existing_val.is_string(),
+                            serde_json::Value::Array(_) => existing_val.is_array(),
+                            serde_json::Value::Object(_) => existing_val.is_object(),
+                        };
+
+                        if is_valid {
+                            result.insert(key.clone(), existing_val);
+                        } else if let Some(default_val) = default_obj.get(key) {
+                            result.insert(key.clone(), default_val.clone());
+                        }
                     }
                 } else if let Some(default_val) = default_obj.get(key) {
                     result.insert(key.clone(), default_val.clone());
                 }
             }
 
+            CURRENT_DEPTH.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
             serde_json::Value::Object(result)
         }
         (_, default) => default,
