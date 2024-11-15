@@ -59,6 +59,8 @@ impl App {
 
         let status = self.app.run();
 
+        self.app.quit();
+
         if let Some(instance_file) = Self::get_instance_file() {
             let _ = fs::remove_file(instance_file);
         }
