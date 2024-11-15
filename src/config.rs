@@ -238,7 +238,7 @@ impl Config {
             String::from("border: none;")
         };
 
-        let colors = if window.use_gtk_colors {
+        if window.use_gtk_colors {
             format!(
                 "window {{
                     background-color: @theme_bg_color;
@@ -386,9 +386,7 @@ impl Config {
                 theme.typography.item_path_size,
                 theme.typography.item_path_font_family,
             )
-        };
-
-        colors
+        }
     }
 }
 
