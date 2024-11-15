@@ -1,9 +1,11 @@
 use crate::ui::LauncherWindow;
 use gtk4::{prelude::*, Application};
-use std::fs::{self, File};
-use std::io::Write;
-use std::path::PathBuf;
-use std::process;
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+    process,
+};
 use tokio::runtime::Runtime;
 
 pub struct App {
