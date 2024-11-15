@@ -18,7 +18,15 @@ impl App {
         let rt = Runtime::new().expect("Failed to create Tokio runtime");
 
         if !Self::can_create_instance() {
-            println!("Maximum number of instances reached");
+            let app = Application::builder()
+                .application_id("hyprutils.hyprlauncher")
+                .flags(gtk4::gio::ApplicationFlags::ALLOW_REPLACEMENT)
+                .build();
+
+            app.register(None::<&gtk4::gio::Cancellable>)
+                .expect("Failed to register application");
+
+            app.activate();
             process::exit(0);
         }
 
@@ -47,22 +55,24 @@ impl App {
     pub fn run(&self) -> i32 {
         let rt_handle = self.rt.handle().clone();
 
-        if self.app.is_remote() {
-            self.app.activate();
-            return 0;
-        }
-
         self.app.connect_activate(move |app| {
-            let window = LauncherWindow::new(app, rt_handle.clone());
-            window.present();
+            let windows = app.windows();
+            if let Some(window) = windows.first() {
+                window.present();
+            } else {
+                let window = LauncherWindow::new(app, rt_handle.clone());
+                window.present();
+            }
         });
 
         let status = self.app.run();
 
-        self.app.quit();
+        if !self.app.is_remote() {
+            self.app.quit();
 
-        if let Some(instance_file) = Self::get_instance_file() {
-            let _ = fs::remove_file(instance_file);
+            if let Some(instance_file) = Self::get_instance_file() {
+                let _ = fs::remove_file(instance_file);
+            }
         }
 
         status.into()
