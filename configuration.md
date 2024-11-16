@@ -93,6 +93,7 @@ When `vim_keys` is enabled:
 
 ### Debug Options
 - `disable_auto_focus`: Prevents the window from automatically holding all input
+- `enable_logging`: Enables logging to the terminal window Hyprlauncher was launched from
 
 ## Hot Reloading
 The configuration file is watched for changes and will automatically reload when modified. No need to restart the application.
