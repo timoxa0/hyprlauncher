@@ -127,6 +127,7 @@ pub struct Theme {
 pub struct Config {
     pub window: Window,
     pub theme: Theme,
+    pub debug: Debug,
 }
 
 #[allow(non_camel_case_types)]
@@ -184,6 +185,11 @@ impl Default for Window {
             use_gtk_colors: false,
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
+pub struct Debug {
+    pub disable_auto_focus: bool,
 }
 
 impl Config {
