@@ -21,9 +21,9 @@ changelog:
     - title: '💻 Backend'
       labels:
         - 'backend'
-    - title: 'Other Changes'
+    - title: '📝 Stray Changes'
       labels:
-        - "*"
+        - '*'
   exclude:
     labels:
       - 'skip-changelog'
