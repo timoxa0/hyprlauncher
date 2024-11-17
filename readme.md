@@ -11,6 +11,16 @@ An unofficial [daemon-like](https://en.wikipedia.org/wiki/Daemon_(computing)) GU
 
 </div>
 
+## Usage
+
+> [!TIP]
+> For optimal performance, bind Hyprlauncher to a keyboard shortcut instead of launching it from a terminal. While the initial launch takes a moment to daemonize, subsequent launches are near-instant (~28-30ms).
+
+Example Hyprland config bind:
+```conf
+bind = $mainMod_SHIFT, E, exec, hyprlauncher
+```
+
 ## Installation
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/hyprlauncher.svg)](https://repology.org/project/hyprlauncher/versions)
