@@ -67,6 +67,7 @@ pub struct Colors {
     pub item_name: String,
     pub item_description: String,
     pub item_path: String,
+    pub border: String,
 }
 
 impl Default for Colors {
@@ -83,6 +84,7 @@ impl Default for Colors {
             item_name: String::from("#ffffff"),
             item_description: String::from("#a0a0a0"),
             item_path: String::from("#808080"),
+            border: String::from("#333333"),
         }
     }
 }
@@ -170,10 +172,9 @@ pub struct Window {
     pub show_paths: bool,
     pub show_icons: bool,
     pub show_search: bool,
-    pub vim_keys: bool,
+    pub custom_navigate_keys: NavigateKeys,
     pub show_border: bool,
     pub border_width: i32,
-    pub border_color: String,
     pub use_gtk_colors: bool,
     pub max_entries: usize,
 }
@@ -187,7 +188,7 @@ impl Default for Window {
             show_paths: false,
             show_icons: true,
             show_search: true,
-            vim_keys: true,
+            custom_navigate_keys: NavigateKeys::default(),
             anchor: WindowAnchor::center,
             margin_top: 0,
             margin_bottom: 0,
@@ -195,7 +196,6 @@ impl Default for Window {
             margin_right: 0,
             show_border: true,
             border_width: 2,
-            border_color: String::from("#333333"),
             use_gtk_colors: false,
             max_entries: 50,
         }
@@ -206,6 +206,23 @@ impl Default for Window {
 pub struct Debug {
     pub disable_auto_focus: bool,
     pub enable_logging: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct NavigateKeys {
+    pub up: String,
+    pub down: String,
+    pub delete_word: String,
+}
+
+impl Default for NavigateKeys {
+    fn default() -> Self {
+        Self {
+            up: String::from("k"),
+            down: String::from("j"),
+            delete_word: String::from("h"),
+        }
+    }
 }
 
 impl Config {
@@ -299,7 +316,7 @@ impl Config {
             } else {
                 format!(
                     "border: {}px solid {};",
-                    window.border_width, window.border_color
+                    window.border_width, theme.colors.border
                 )
             }
         } else {
