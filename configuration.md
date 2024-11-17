@@ -23,7 +23,8 @@ The configuration file controls the appearance and behavior of the launcher wind
     "show_border": true,         // Show window border
     "border_width": 2,           // Border width in pixels
     "border_color": "#333333",   // Border color in hex format
-    "use_gtk_colors": false      // Use GTK theme colors instead of custom colors
+    "use_gtk_colors": false,     // Use GTK theme colors instead of custom colors
+    "max_entries": 50            // Maximum number of entries to show in the list
   },
   "theme": {
     "colors": {
@@ -73,23 +74,32 @@ The `anchor` setting determines where the window appears on screen. Options are:
 - bottom: Window appears at the bottom of the screen
 - left: Window appears on the left side of the screen
 - right: Window appears on the right side of the screen
+- top_left: Window appears in the top left corner
+- top_right: Window appears in the top right corner
+- bottom_left: Window appears in the bottom left corner
+- bottom_right: Window appears in the bottom right corner
+
+### Performance
+- `max_entries`: Limits the maximum number of entries shown in the list for better performance
 
 ### Vim Keys
 When `vim_keys` is enabled:
-- j: Move selection down
-- k: Move selection up
+- `ctrl+j`: Move selection down
+- `ctrl+k`: Move selection up
 
 ### Search
 - The search bar can be focused by pressing `/`
 - Escape clears the search or moves focus to the results list
 - Supports fuzzy matching for application names
 - Special path searching with `~`, `$`, or `/` prefixes
+- Search results are ranked by launch frequency
 
 ### Visual Customization
 - Border customization with `border_width` and `border_color`
 - Corner radius customization for window, search bar, and list items
 - Option to use GTK theme colors with `use_gtk_colors`
 - Show/hide application icons, descriptions, and paths
+- theme customization including colors, spacing, and typography
 
 ### Debug Options
 - `disable_auto_focus`: Prevents the window from automatically holding all input
@@ -106,16 +116,16 @@ Applications are searched in the following locations:
 - /var/lib/flatpak/exports/share/applications
 - ~/.local/share/flatpak/exports/share/applications
 
-Furthermore, applications can be indexed via XDG_DATA_DIRS variable.
+Furthermore, applications can be indexed via XDG_DATA_DIRS environment variable.
 
-## Config merging
-If the configuration file is invalid the application will
-default to the default configuration template, furthermore if
-you are missing certain values / keys inside of your
-configuration file then they will be added, Hyprlauncher
-was made to be easy to configure providing / merging
-all existing configuration values with your config.
-Making it easy for new users and advanced users alike.
-Please keep in mind that the configuration file is strict
-and will not tolerate any type of invalid JSON or value.
+## Application Launch History
+Hyprlauncher maintains a launch history for applications in `~/.local/share/hyprlauncher/heatmap.json`. This is used to improve search result rankings based on usage frequency.
+
+## Config Merging
+If the configuration file is invalid or missing certain values, Hyprlauncher will:
+1. Use default values for missing fields
+2. Merge existing valid configuration with defaults
+3. Write the merged configuration back to the file
+
+The configuration file is strict and requires valid JSON format. Invalid configurations will fall back to defaults.
 
