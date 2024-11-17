@@ -108,6 +108,17 @@ When `vim_keys` is enabled:
 ## Hot Reloading
 The configuration file is watched for changes and will automatically reload when modified. No need to restart the application.
 
+> [!NOTE]
+> To interact and see your live config changes while the launcher is open, set `disable_auto_focus` to `true` in your config:
+> ```json
+> {
+>   "debug": {
+>     "disable_auto_focus": true
+>   }
+> }
+> ```
+> This allows you to edit the config file while the launcher window is open. Otherwise, the launcher's exclusive keyboard focus will prevent text editing in other windows.
+
 ## Default Paths
 Applications are searched in the following locations:
 - ~/.local/share/applications
