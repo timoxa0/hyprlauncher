@@ -100,7 +100,7 @@ Navigation can be customized using the `custom_navigate_keys` setting:
 - Search results are ranked by launch frequency
 
 ### Visual Customization
-- Border customization with `border_width` and `border_color`
+- Border customization with `border_width` - Window section, and `border` - Theme section
 - Corner radius customization for window, search bar, and list items
 - Option to use GTK theme colors with `use_gtk_colors`
 - Show/hide application icons, descriptions, and paths
