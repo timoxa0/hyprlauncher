@@ -65,8 +65,14 @@ pub struct Colors {
     pub search_text: String,
     pub search_caret: String,
     pub item_name: String,
+    pub item_name_selected: String,
+    pub item_name_hover: String,
     pub item_description: String,
+    pub item_description_selected: String,
+    pub item_description_hover: String,
     pub item_path: String,
+    pub item_path_selected: String,
+    pub item_path_hover: String,
     pub border: String,
 }
 
@@ -82,8 +88,14 @@ impl Default for Colors {
             search_text: String::from("#e0e0e0"),
             search_caret: String::from("#808080"),
             item_name: String::from("#ffffff"),
+            item_name_selected: String::from("#ffffff"),
+            item_name_hover: String::from("#ffffff"),
             item_description: String::from("#a0a0a0"),
+            item_description_selected: String::from("#a0a0a0"),
+            item_description_hover: String::from("#a0a0a0"),
             item_path: String::from("#808080"),
+            item_path_selected: String::from("#808080"),
+            item_path_hover: String::from("#808080"),
             border: String::from("#333333"),
         }
     }
@@ -433,16 +445,34 @@ impl Config {
                     font-weight: bold;
                     margin-right: 8px;
                 }}
+                listview > row:selected .app-name {{
+                    color: {};
+                }}
+                listview > row:hover:not(:selected) .app-name {{
+                    color: {};
+                }}
                 .app-description {{
                     color: {};
                     font-size: {}px;
                     margin-right: 8px;
+                }}
+                listview > row:selected .app-description {{
+                    color: {};
+                }}
+                listview > row:hover:not(:selected) .app-description {{
+                    color: {};
                 }}
                 .app-path {{
                     color: {};
                     font-size: {}px;
                     font-family: {};
                     opacity: 0.8;
+                }}
+                listview > row:selected .app-path {{
+                    color: {};
+                }}
+                listview > row:hover:not(:selected) .app-path {{
+                    color: {};
                 }}
                 scrollbar {{ opacity: 0; }}",
                 theme.colors.window_bg,
@@ -465,11 +495,17 @@ impl Config {
                 theme.colors.search_bg_focused,
                 theme.colors.item_name,
                 theme.typography.item_name_size,
+                theme.colors.item_name_selected,
+                theme.colors.item_name_hover,
                 theme.colors.item_description,
                 theme.typography.item_description_size,
+                theme.colors.item_description_selected,
+                theme.colors.item_description_hover,
                 theme.colors.item_path,
                 theme.typography.item_path_size,
                 theme.typography.item_path_font_family,
+                theme.colors.item_path_selected,
+                theme.colors.item_path_hover,
             )
         }
     }
