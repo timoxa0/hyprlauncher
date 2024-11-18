@@ -41,13 +41,10 @@ The configuration file controls the appearance and behavior of the launcher wind
       "search_text": "#e0e0e0",               // Search text color
       "search_caret": "#808080",              // Search cursor color
       "item_name": "#ffffff",                 // Application name color
-      "item_name_hover": "#ffffff",           // Application name color on hover
       "item_name_selected": "#ffffff",        // Application name color when selected
       "item_description": "#a0a0a0",          // Application description color
-      "item_description_hover": "#a0a0a0",    // Application description color on hover
       "item_description_selected": "#a0a0a0", // Application description color when selected
       "item_path": "#808080",                 // Application path color
-      "item_path_hover": "#808080",           // Application path color on hover
       "item_path_selected": "#808080",        // Application path color when selected
     },
     "corners": {
