@@ -371,16 +371,28 @@ impl Config {
                     font-weight: bold;
                     margin-right: 8px;
                 }}
+                listview > row:selected .app-name,
+                listview > row:hover:not(:selected) .app-name {{
+                    color: @theme_selected_fg_color;
+                }}
                 .app-description {{
                     color: mix(@theme_fg_color, @theme_bg_color, 0.7);
                     font-size: {}px;
                     margin-right: 8px;
+                }}
+                listview > row:selected .app-description,
+                listview > row:hover:not(:selected) .app-description {{
+                    color: mix(@theme_selected_fg_color, @theme_bg_color, 0.7);
                 }}
                 .app-path {{
                     color: mix(@theme_fg_color, @theme_bg_color, 0.5);
                     font-size: {}px;
                     font-family: {};
                     opacity: 0.8;
+                }}
+                listview > row:selected .app-path,
+                listview > row:hover:not(:selected) .app-path {{
+                    color: mix(@theme_selected_fg_color, @theme_bg_color, 0.6);
                 }}
                 scrollbar {{ opacity: 0; }}",
                 theme.corners.window,
