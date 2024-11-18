@@ -31,18 +31,21 @@ The configuration file controls the appearance and behavior of the launcher wind
   },
   "theme": {
     "colors": {
-      "border": "#333333",              // Border color in hex format
-      "window_bg": "#0f0f0f",           // Window background color
-      "search_bg": "#1f1f1f",           // Search bar background color
-      "search_bg_focused": "#282828",   // Search bar background color when focused
-      "item_bg": "#0f0f0f",             // List item background color
-      "item_bg_hover": "#181818",       // List item background color on hover
-      "item_bg_selected": "#1f1f1f",    // List item background color when selected
-      "search_text": "#e0e0e0",         // Search text color
-      "search_caret": "#808080",        // Search cursor color
-      "item_name": "#ffffff",           // Application name color
-      "item_description": "#a0a0a0",    // Application description color
-      "item_path": "#808080"            // Application path color
+      "border": "#333333",                    // Border color in hex format
+      "window_bg": "#0f0f0f",                 // Window background color
+      "search_bg": "#1f1f1f",                 // Search bar background color
+      "search_bg_focused": "#282828",         // Search bar background color when focused
+      "item_bg": "#0f0f0f",                   // List item background color
+      "item_bg_hover": "#181818",             // List item background color on hover
+      "item_bg_selected": "#1f1f1f",          // List item background color when selected
+      "search_text": "#e0e0e0",               // Search text color
+      "search_caret": "#808080",              // Search cursor color
+      "item_name": "#ffffff",                 // Application name color
+      "item_name_selected": "#ffffff",        // Application name color when selected
+      "item_description": "#a0a0a0",          // Application description color
+      "item_description_selected": "#a0a0a0", // Application description color when selected
+      "item_path": "#808080",                 // Application path color
+      "item_path_selected": "#808080",        // Application path color when selected
     },
     "corners": {
       "window": 12,              // Window corner radius in pixels
